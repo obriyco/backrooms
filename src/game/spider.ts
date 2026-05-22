@@ -43,6 +43,9 @@ export class SpiderMonster {
   private nextSoundTime = 0;
   private elapsed = 0;
 
+  // Glitch effect timer — public so game can read it
+  glitchTimer = 0;
+
   constructor(scene: THREE.Scene, maze: MazeData, cellSize: number) {
     this.scene = scene;
     this.maze = maze;
@@ -416,10 +419,17 @@ export class SpiderMonster {
       this.legPivots[i].rotation.x = Math.sin(this.legTime + phase) * 0.3;
     }
 
+    // Glitch timer countdown
+    if (this.glitchTimer > 0) this.glitchTimer -= dt;
+
     // Sounds
     if (this.elapsed >= this.nextSoundTime) {
-      this.playCreepySound(distToPlayer);
+      const played = this.playCreepySound(distToPlayer);
       this.nextSoundTime = this.elapsed + SOUND_INTERVAL_MIN + Math.random() * (SOUND_INTERVAL_MAX - SOUND_INTERVAL_MIN);
+      // Trigger glitch if sound was audible
+      if (played) {
+        this.glitchTimer = 0.3 + Math.random() * 0.5;
+      }
     }
 
     return false;
@@ -438,12 +448,12 @@ export class SpiderMonster {
     if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
   }
 
-  private playCreepySound(distToPlayer: number) {
+  private playCreepySound(distToPlayer: number): boolean {
     this.ensureAudio();
-    if (!this.audioCtx || !this.audioGain) return;
+    if (!this.audioCtx || !this.audioGain) return false;
     const rawVol = Math.max(0, 1 - distToPlayer / SOUND_MAX_DIST);
     const volume = rawVol * rawVol;
-    if (volume <= 0.01) return;
+    if (volume <= 0.01) return false;
 
     const now = this.audioCtx.currentTime;
     const type = Math.floor(Math.random() * 5);
@@ -550,7 +560,9 @@ export class SpiderMonster {
           break;
         }
       }
+      return true;
     } catch { /* ignore */ }
+    return false;
   }
 
   // ── Getters for spider-vision camera ──

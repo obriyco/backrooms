@@ -13,6 +13,7 @@ function App() {
   const [level, setLevel] = useState(1);
   const [timer, setTimer] = useState(0);
   const [spiderDist, setSpiderDist] = useState(99);
+  const [glitch, setGlitch] = useState(false);
   const [aiCountdown, setAiCountdown] = useState(0);
   const timerRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -28,11 +29,14 @@ function App() {
         timerRef.current += 1;
         setTimer(timerRef.current);
       }, 1000);
-      // Poll spider distance
+      // Poll spider distance & glitch
       distIntervalRef.current = setInterval(() => {
         const info = gameRef.current?.getPlayerInfo();
-        if (info) setSpiderDist(info.spiderDist);
-      }, 500);
+        if (info) {
+          setSpiderDist(info.spiderDist);
+          setGlitch(info.glitch);
+        }
+      }, 100);
     } else if (state === 'won' || state === 'caught') {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -552,6 +556,74 @@ function App() {
             </p>
           </div>
         </div>
+      )}
+
+      {/* Spider scream glitch effect */}
+      {glitch && gameState === 'playing' && (
+        <>
+          {/* Horizontal displacement bars */}
+          <div
+            className="absolute inset-0 pointer-events-none z-[6]"
+            style={{
+              background: `
+                repeating-linear-gradient(
+                  0deg,
+                  transparent ${Math.random() * 20}%,
+                  rgba(255,0,0,${0.06 + Math.random() * 0.08}) ${Math.random() * 25}%,
+                  transparent ${25 + Math.random() * 15}%,
+                  rgba(0,255,255,${0.04 + Math.random() * 0.06}) ${50 + Math.random() * 10}%,
+                  transparent ${65 + Math.random() * 10}%,
+                  rgba(255,0,0,${0.05 + Math.random() * 0.07}) ${80 + Math.random() * 10}%,
+                  transparent 95%
+                )
+              `,
+              mixBlendMode: 'screen',
+              animation: 'none',
+            }}
+          />
+          {/* Color channel split / chromatic aberration feel */}
+          <div
+            className="absolute pointer-events-none z-[6]"
+            style={{
+              top: `${10 + Math.random() * 60}%`,
+              left: 0,
+              right: 0,
+              height: `${2 + Math.random() * 8}%`,
+              background: `rgba(255,0,${Math.floor(Math.random() * 80)},${0.08 + Math.random() * 0.12})`,
+              transform: `translateX(${(Math.random() - 0.5) * 15}px)`,
+            }}
+          />
+          <div
+            className="absolute pointer-events-none z-[6]"
+            style={{
+              top: `${30 + Math.random() * 50}%`,
+              left: 0,
+              right: 0,
+              height: `${1 + Math.random() * 4}%`,
+              background: `rgba(0,${Math.floor(100 + Math.random() * 155)},255,${0.06 + Math.random() * 0.1})`,
+              transform: `translateX(${(Math.random() - 0.5) * 20}px)`,
+            }}
+          />
+          {/* Random noise block */}
+          <div
+            className="absolute pointer-events-none z-[6]"
+            style={{
+              top: `${Math.random() * 80}%`,
+              left: `${Math.random() * 70}%`,
+              width: `${10 + Math.random() * 30}%`,
+              height: `${1 + Math.random() * 3}%`,
+              background: `rgba(${Math.floor(Math.random() * 255)},${Math.floor(Math.random() * 255)},${Math.floor(Math.random() * 255)},${0.05 + Math.random() * 0.1})`,
+              transform: `skewX(${(Math.random() - 0.5) * 10}deg)`,
+            }}
+          />
+          {/* Full-screen flash */}
+          <div
+            className="absolute inset-0 pointer-events-none z-[6]"
+            style={{
+              background: `rgba(${Math.random() > 0.5 ? '255,0,0' : '0,255,255'},${0.02 + Math.random() * 0.04})`,
+            }}
+          />
+        </>
       )}
 
       {/* Vignette overlay */}

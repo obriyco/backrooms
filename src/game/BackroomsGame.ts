@@ -593,8 +593,25 @@ export class BackroomsGame {
     const startZ = this.maze.startZ * CELL_SIZE + CELL_SIZE / 2;
     this.playerPos.set(startX, PLAYER_HEIGHT, startZ);
     this.camera.position.copy(this.playerPos);
-    this.yaw = Math.PI / 4;
+
+    // Face the first available open passage instead of a fixed angle,
+    // so the player doesn't start by looking at a wall.
+    const startCell = this.maze.grid[this.maze.startZ][this.maze.startX];
+    if (!startCell.walls.east) {
+      this.yaw = -Math.PI / 2; // +X
+    } else if (!startCell.walls.south) {
+      this.yaw = Math.PI; // +Z
+    } else if (!startCell.walls.west) {
+      this.yaw = Math.PI / 2; // -X
+    } else if (!startCell.walls.north) {
+      this.yaw = 0; // -Z
+    } else {
+      this.yaw = Math.PI;
+    }
+
     this.pitch = 0;
+    this._euler.set(this.pitch, this.yaw, 0);
+    this.camera.quaternion.setFromEuler(this._euler);
   }
 
   startGame = () => {
@@ -1175,6 +1192,7 @@ export class BackroomsGame {
       level: this.level,
       spiderDist,
       aiMode: this.aiMode,
+      glitch: this.spider.glitchTimer > 0,
     };
   }
 
